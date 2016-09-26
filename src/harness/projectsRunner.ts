@@ -256,14 +256,14 @@ class ProjectRunner extends RunnerBase {
                 // Set the values specified using json
                 const optionNameMap = ts.arrayToMap(ts.optionDeclarations, option => option.name);
                 for (const name in testCase) {
-                    if (name !== "mapRoot" && name !== "sourceRoot" && name in optionNameMap) {
-                        const option = optionNameMap[name];
+                    if (name !== "mapRoot" && name !== "sourceRoot" && optionNameMap.has(name)) {
+                        const option = optionNameMap.get(name);
                         const optType = option.type;
                         let value = <any>testCase[name];
                         if (typeof optType !== "string") {
                             const key = value.toLowerCase();
-                            if (key in optType) {
-                                value = optType[key];
+                            if (optType.has(key)) {
+                                value = optType.get(key);
                             }
                         }
                         compilerOptions[option.name] = value;

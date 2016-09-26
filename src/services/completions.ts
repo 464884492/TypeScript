@@ -58,18 +58,17 @@ namespace ts.Completions {
 
         return { isMemberCompletion, isNewIdentifierLocation: isNewIdentifierLocation, entries };
 
-        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: Map<string>): CompletionEntry[] {
+        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: StringSet): CompletionEntry[] {
             const entries: CompletionEntry[] = [];
 
-            const nameTable = getNameTable(sourceFile);
-            for (const name in nameTable) {
+            getNameTable(sourceFile).forEach((nameTablePosition, name) => {
                 // Skip identifiers produced only from the current location
-                if (nameTable[name] === position) {
-                    continue;
+                if (nameTablePosition === position) {
+                    return;
                 }
 
-                if (!uniqueNames[name]) {
-                    uniqueNames[name] = name;
+                if (!uniqueNames.has(name)) {
+                    uniqueNames.add(name);
                     const displayName = getCompletionEntryDisplayName(unescapeIdentifier(name), compilerOptions.target, /*performCharacterChecks*/ true);
                     if (displayName) {
                         const entry = {
@@ -81,7 +80,7 @@ namespace ts.Completions {
                         entries.push(entry);
                     }
                 }
-            }
+            });
 
             return entries;
         }
@@ -112,17 +111,17 @@ namespace ts.Completions {
 
         }
 
-        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): Map<string> {
+        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): StringSet {
             const start = timestamp();
-            const uniqueNames = createMap<string>();
+            const uniqueNames = new StringSet();
             if (symbols) {
                 for (const symbol of symbols) {
                     const entry = createCompletionEntry(symbol, location, performCharacterChecks);
                     if (entry) {
                         const id = escapeIdentifier(entry.name);
-                        if (!uniqueNames[id]) {
+                        if (!uniqueNames.has(id)) {
                             entries.push(entry);
-                            uniqueNames[id] = id;
+                            uniqueNames.add(id);
                         }
                     }
                 }
@@ -340,7 +339,7 @@ namespace ts.Completions {
                 const files = tryReadDirectory(host, baseDirectory, extensions, /*exclude*/undefined, /*include*/["./*"]);
 
                 if (files) {
-                    const foundFiles = createMap<boolean>();
+                    const foundFiles = new StringSet();
                     for (let filePath of files) {
                         filePath = normalizePath(filePath);
                         if (exclude && comparePaths(filePath, exclude, scriptPath, ignoreCase) === Comparison.EqualTo) {
@@ -349,14 +348,14 @@ namespace ts.Completions {
 
                         const foundFileName = includeExtensions ? getBaseFileName(filePath) : removeFileExtension(getBaseFileName(filePath));
 
-                        if (!foundFiles[foundFileName]) {
-                            foundFiles[foundFileName] = true;
+                        if (!foundFiles.has(foundFileName)) {
+                            foundFiles.add(foundFileName);
                         }
                     }
 
-                    for (const foundFile in foundFiles) {
+                    foundFiles.forEach(foundFile => {
                         result.push(createCompletionEntryForModule(foundFile, ScriptElementKind.scriptElement, span));
-                    }
+                    });
                 }
 
                 // If possible, get folder completion as well
@@ -394,7 +393,7 @@ namespace ts.Completions {
 
                 if (paths) {
                     for (const path in paths) {
-                        if (paths.hasOwnProperty(path)) {
+                        if (paths.hasOwnProperty(path)) { //use hasProperty
                             if (path === "*") {
                                 if (paths[path]) {
                                     for (const pattern of paths[path]) {
@@ -1513,7 +1512,7 @@ namespace ts.Completions {
          *          do not occur at the current position and have not otherwise been typed.
          */
         function filterNamedImportOrExportCompletionItems(exportsOfModule: Symbol[], namedImportsOrExports: ImportOrExportSpecifier[]): Symbol[] {
-            const existingImportsOrExports = createMap<boolean>();
+            const existingImportsOrExports = new StringSet();
 
             for (const element of namedImportsOrExports) {
                 // If this is the current item we are editing right now, do not filter it out
@@ -1522,14 +1521,14 @@ namespace ts.Completions {
                 }
 
                 const name = element.propertyName || element.name;
-                existingImportsOrExports[name.text] = true;
+                existingImportsOrExports.add(name.text);
             }
 
-            if (!someProperties(existingImportsOrExports)) {
+            if (setIsEmpty(existingImportsOrExports)) {
                 return filter(exportsOfModule, e => e.name !== "default");
             }
 
-            return filter(exportsOfModule, e => e.name !== "default" && !existingImportsOrExports[e.name]);
+            return filter(exportsOfModule, e => e.name !== "default" && !existingImportsOrExports.has(e.name));
         }
 
         /**
@@ -1543,7 +1542,7 @@ namespace ts.Completions {
                 return contextualMemberSymbols;
             }
 
-            const existingMemberNames = createMap<boolean>();
+            const existingMemberNames = new StringSet();
             for (const m of existingMembers) {
                 // Ignore omitted expressions for missing members
                 if (m.kind !== SyntaxKind.PropertyAssignment &&
@@ -1573,10 +1572,10 @@ namespace ts.Completions {
                     existingName = (<Identifier>m.name).text;
                 }
 
-                existingMemberNames[existingName] = true;
+                existingMemberNames.add(existingName);
             }
 
-            return filter(contextualMemberSymbols, m => !existingMemberNames[m.name]);
+            return filter(contextualMemberSymbols, m => !existingMemberNames.has(m.name));
         }
 
         /**
@@ -1586,7 +1585,7 @@ namespace ts.Completions {
          *          do not occur at the current position and have not otherwise been typed.
          */
         function filterJsxAttributes(symbols: Symbol[], attributes: NodeArray<JsxAttribute | JsxSpreadAttribute>): Symbol[] {
-            const seenNames = createMap<boolean>();
+            const seenNames = new StringSet();
             for (const attr of attributes) {
                 // If this is the current item we are editing right now, do not filter it out
                 if (attr.getStart() <= position && position <= attr.getEnd()) {
@@ -1594,11 +1593,11 @@ namespace ts.Completions {
                 }
 
                 if (attr.kind === SyntaxKind.JsxAttribute) {
-                    seenNames[(<JsxAttribute>attr).name.text] = true;
+                    seenNames.add((<JsxAttribute>attr).name.text);
                 }
             }
 
-            return filter(symbols, a => !seenNames[a.name]);
+            return filter(symbols, a => !seenNames.has(a.name));
         }
     }
 

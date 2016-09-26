@@ -48,9 +48,9 @@ namespace ts {
     export interface SourceFile {
         /* @internal */ version: string;
         /* @internal */ scriptSnapshot: IScriptSnapshot;
-        /* @internal */ nameTable: Map<number>;
+        /* @internal */ nameTable: StringMap<number>;
 
-        /* @internal */ getNamedDeclarations(): Map<Declaration[]>;
+        /* @internal */ getNamedDeclarations(): StringMap<Declaration[]>;
 
         getLineAndCharacterOfPosition(pos: number): LineAndCharacter;
         getLineStarts(): number[];
@@ -131,7 +131,7 @@ namespace ts {
         getScriptKind?(fileName: string): ScriptKind;
         getScriptVersion(fileName: string): string;
         getScriptSnapshot(fileName: string): IScriptSnapshot | undefined;
-        getLocalizedDiagnosticMessages?(): any;
+        getLocalizedDiagnosticMessages?(): any; //any???
         getCancellationToken?(): HostCancellationToken;
         getCurrentDirectory(): string;
         getDefaultLibFileName(options: CompilerOptions): string;

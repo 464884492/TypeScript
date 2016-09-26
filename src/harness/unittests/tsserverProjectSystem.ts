@@ -238,10 +238,11 @@ namespace ts.projectSystem {
         return entry;
     }
 
-    export function checkMapKeys(caption: string, map: Map<any>, expectedKeys: string[]) {
+    //where was this exported to?
+    export function checkMapKeys(caption: string, map: StringMap<any>, expectedKeys: string[]) {
         assert.equal(reduceProperties(map, count => count + 1, 0), expectedKeys.length, `${caption}: incorrect size of map`);
         for (const name of expectedKeys) {
-            assert.isTrue(name in map, `${caption} is expected to contain ${name}, actual keys: ${Object.keys(map)}`);
+            assert.isTrue(map.has(name), `${caption} is expected to contain ${name}, actual keys: ${_ownKeys(map)}`);
         }
     }
 
@@ -287,6 +288,7 @@ namespace ts.projectSystem {
     }
 
     export class Callbacks {
+        //use a NumberMap
         private map: { [n: number]: TimeOutCallback } = {};
         private nextId = 1;
 
@@ -334,8 +336,9 @@ namespace ts.projectSystem {
         private timeoutCallbacks = new Callbacks();
         private immediateCallbacks = new Callbacks();
 
-        readonly watchedDirectories = createMap<{ cb: DirectoryWatcherCallback, recursive: boolean }[]>();
-        readonly watchedFiles = createMap<FileWatcherCallback[]>();
+        readonly watchedDirectories = new StringMap<{ cb: DirectoryWatcherCallback, recursive: boolean }[]>();
+        readonly watchedFiles = new StringMap<FileWatcherCallback[]>();
+
 
         private filesOrFolders: FileOrFolder[];
 
@@ -430,7 +433,7 @@ namespace ts.projectSystem {
 
         triggerDirectoryWatcherCallback(directoryName: string, fileName: string): void {
             const path = this.toPath(directoryName);
-            const callbacks = this.watchedDirectories[path];
+            const callbacks = this.watchedDirectories.get(path);
             if (callbacks) {
                 for (const callback of callbacks) {
                     callback.cb(fileName);
@@ -440,7 +443,7 @@ namespace ts.projectSystem {
 
         triggerFileWatcherCallback(fileName: string, removed?: boolean): void {
             const path = this.toPath(fileName);
-            const callbacks = this.watchedFiles[path];
+            const callbacks = this.watchedFiles.get(path);
             if (callbacks) {
                 for (const callback of callbacks) {
                     callback(path, removed);
@@ -2026,7 +2029,7 @@ namespace ts.projectSystem {
             const projectFileName = "externalProject";
             const host = createServerHost([f]);
             const projectService = createProjectService(host);
-            // create a project 
+            // create a project
             projectService.openExternalProject({ projectFileName, rootFiles: [toExternalFile(f.path)], options: {} });
             projectService.checkNumberOfProjects({ externalProjects: 1 });
 
