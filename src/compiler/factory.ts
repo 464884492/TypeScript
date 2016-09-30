@@ -2659,9 +2659,9 @@ namespace ts {
         return destEmitNode;
     }
 
-    function mergeTokenSourceMapRanges(sourceRanges: NumberMap<SyntaxKind, TextRange>, destRanges: NumberMap<SyntaxKind, TextRange>): NumberMap<SyntaxKind, TextRange> {
+    function mergeTokenSourceMapRanges(sourceRanges: Map<SyntaxKind, TextRange>, destRanges: Map<SyntaxKind, TextRange>): Map<SyntaxKind, TextRange> {
         if (!destRanges) destRanges = new NumberMap<SyntaxKind, TextRange>();
-        copyNumberMapPropertiesFromTo(sourceRanges, destRanges);
+        copyMapEntriesFromTo(sourceRanges, destRanges);
         return destRanges;
     }
 

@@ -223,7 +223,7 @@ const _super = (function (geti, seti) {
         let tempFlags: TempFlags;
         let currentSourceFile: SourceFile;
         let currentText: string;
-        let currentFileIdentifiers: StringMap<string>;
+        let currentFileIdentifiers: Map<string, string>;
         let extendsEmitted: boolean;
         let assignEmitted: boolean;
         let decorateEmitted: boolean;

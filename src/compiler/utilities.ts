@@ -137,7 +137,7 @@ namespace ts {
     }
 
     /* @internal */
-    export function hasChangesInResolutions<T>(names: string[], newResolutions: T[], oldResolutions: StringMap<T>, comparer: (oldResolution: T, newResolution: T) => boolean): boolean {
+    export function hasChangesInResolutions<T>(names: string[], newResolutions: T[], oldResolutions: Map<string, T>, comparer: (oldResolution: T, newResolution: T) => boolean): boolean {
         if (names.length !== newResolutions.length) {
             return false;
         }
@@ -3333,16 +3333,14 @@ namespace ts {
     export function formatSyntaxKind(kind: SyntaxKind): string {
         const syntaxKindEnum = (<any>ts).SyntaxKind;
         if (syntaxKindEnum) {
-            if (syntaxKindCache.has(kind)) {
-                return syntaxKindCache.get(kind);
+            const cached = syntaxKindCache.get(kind);
+            if (cached !== undefined) {
+                return cached;
             }
 
             for (const name in syntaxKindEnum) {
                 if (syntaxKindEnum[name] === kind) {
-                    //setAndReturn
-                    const value = kind.toString() + " (" + name + ")";
-                    syntaxKindCache.set(kind, value);
-                    return value;
+                    return setAndReturn(syntaxKindCache, kind, `${kind}(${name})`);
                 }
             }
         }

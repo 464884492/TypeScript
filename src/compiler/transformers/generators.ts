@@ -241,7 +241,7 @@ namespace ts {
 
         let currentSourceFile: SourceFile;
         let renamedCatchVariables: StringSet;
-        let renamedCatchVariableDeclarations: NumberMap<number, Identifier>;
+        let renamedCatchVariableDeclarations: Map<number, Identifier>;
 
         let inGeneratorFunctionBody: boolean;
         let inStatementContainingYield: boolean;

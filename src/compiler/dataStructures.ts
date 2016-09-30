@@ -1,6 +1,16 @@
 // Oldmap
 /* @internal */
 namespace ts {
+    /**
+     * Type of objects with a null prototype, meant to be used only as dictionaries.
+     * Prefer to use StringMap.
+     */
+    //rename, or kill?
+    export interface OldMap<T> {
+        __oldMapBrand: any;
+        [key: string]: T;
+    }
+
     const hasOwnProperty = Object.prototype.hasOwnProperty; //neater
     export function createOldMap<T>(template?: MapLike<T>): OldMap<T> {
         const map = createDictionaryModeObject();
@@ -17,34 +27,27 @@ namespace ts {
     }
 }
 
-/* @internal */
-namespace ts {
-    //move
-    export function filterSetToArray(set: StringSet, keepIf: (value: string) => boolean): string[] {
-        const result: string[] = [];
-        set.forEach(value => {
-            if (keepIf(value))
-                result.push(value);
-        });
-        return result;
-    }
-}
-
-//NumberMap and StringMap internal implementation
+// Map constructors: NumberMap and StringMap
 /* @internal */
 namespace ts {
     // The global Map object. This may not be available, so we must test for it.
     declare const Map: NumberMapStatic & StringMapStatic | undefined;
     const usingNativeMaps = typeof Map !== "undefined";
 
+    //review
     export interface NumberMapStatic {
         /**
          * Creates a new NumberMap.
          * If `pairs` is provided, each [key, value] pair will be added to the map.
          */
-        new<K extends number, V>(pairs?: [K, V][]): NumberMap<K, V>;
+        new<K extends number, V>(pairs?: [K, V][]): Map<K, V>;
     }
-    export const NumberMap: NumberMapStatic = usingNativeMaps ? Map : class ShimNumberMap<K extends number, V> implements NumberMap<K, V> {
+
+    /**
+     * In runtimes without Maps, this is implemented using a sparse array.
+     * This is generic over the key type because it is usually an enum.
+     */
+    export const NumberMap: NumberMapStatic = usingNativeMaps ? Map : class ShimNumberMap<K extends number, V> implements Map<K, V> {
         private data: { [key: number]: V } = [];
 
         constructor(pairs?: [K, V][]) {
@@ -83,23 +86,33 @@ namespace ts {
         }
     };
 
+    //move
+    export const mapSize: (map: Map<any, any>) => number = usingNativeMaps
+        ? map => (map as any).size
+        : map => {
+            let size = 0;
+            map.forEach(() => { size++; });
+            return size;
+        }
+
     interface Iterator<T> {
         next(): { value: T, done: false } | { value: never, done: true };
     }
 
     /** Completes the full ES6 Map spec. Internet Explorer does not provide these methods, so we must provide fallbacks. */
-    interface FullyFeaturedMap<T> extends StringMap<T> {
-        keys(): Iterator<string>;
-        values(): Iterator<T>;
-        entries(): Iterator<[string, T]>;
+    interface FullyFeaturedMap<K, V> extends Map<K, V> {
+        keys(): Iterator<K>;
+        values(): Iterator<V>;
+        entries(): Iterator<[K, V]>;
     }
     // tslint:disable-next-line:no-in-operator
     const fullyFeaturedMaps = usingNativeMaps && "keys" in Map.prototype && "values" in Map.prototype && "entries" in Map.prototype;
 
     export interface StringMapStatic {
-        new<T>(): StringMap<T>;
+        new<T>(): Map<string, T>;
     }
-    export const StringMap: StringMapStatic = usingNativeMaps ? Map : class ShimStringMap<T> implements StringMap<T> {
+    /** In runtimes without Maps, this is implemented using an object. */
+    export const StringMap: StringMapStatic = usingNativeMaps ? Map : class ShimStringMap<T> implements Map<string, T> {
         private data = createOldMap<T>();
 
         constructor() {}
@@ -132,7 +145,7 @@ namespace ts {
     };
 
     //doc
-    export function createMapWithEntry<T>(key: string, value: T): StringMap<T> {
+    export function createMapWithEntry<T>(key: string, value: T): Map<string, T> {
         const map = new StringMap<T>();
         map.set(key, value);
         return map;
@@ -159,8 +172,8 @@ namespace ts {
     }
 
     //doc
-    export const findInMap: <T, U>(map: StringMap<T>, f: (value: T, key: string) => U | undefined) => U | undefined = fullyFeaturedMaps
-        ? <T, U>(map: FullyFeaturedMap<T>, f: (value: T, key: string) => U | undefined) => {
+    export const findInMap: <K, V, U>(map: Map<K, V>, f: (value: V, key: K) => U | undefined) => U | undefined = fullyFeaturedMaps
+        ? <K, V, U>(map: FullyFeaturedMap<K, V>, f: (value: V, key: K) => U | undefined) => {
             const iter = map.entries();
             while (true) {
                 const { value: pair, done } = iter.next();
@@ -174,7 +187,7 @@ namespace ts {
                 }
             }
         }
-        : <T, U>(map: StringMap<T>, f: (value: T, key: string) => U | undefined) => {
+        : <K, V, U>(map: Map<K, V>, f: (value: V, key: K) => U | undefined) => {
             let result: U | undefined;
             map.forEach((value, key) => {
                 if (result === undefined)
@@ -184,10 +197,10 @@ namespace ts {
         };
 
     //not used outside of this file, so don't export.
-    export const someInMap: <T>(map: StringMap<T>, predicate: (value: T, key: string) => boolean) => boolean = fullyFeaturedMaps
-        ? <T>(map: FullyFeaturedMap<T>, predicate: (value: T, key: string) => boolean) =>
+    export const someInMap: <K, V>(map: Map<K, V>, predicate: (value: V, key: K) => boolean) => boolean = fullyFeaturedMaps
+        ? <K, V>(map: FullyFeaturedMap<K, V>, predicate: (value: V, key: K) => boolean) =>
             someInIterator(map.entries(), ([key, value]) => predicate(value, key))
-        : <T>(map: StringMap<T>, predicate: (value: T, key: string) => boolean) => {
+        : <K, V>(map: Map<K, V>, predicate: (value: V, key: K) => boolean) => {
             let found = false;
             map.forEach((value, key) => {
                 found = found || predicate(value, key);
@@ -196,16 +209,16 @@ namespace ts {
         };
 
     //just call some?
-    export const _eachAndBreakIfReturningTrue: <T>(map: StringMap<T>, action: (value: T, key: string) => boolean) => void = someInMap;
+    export const _eachAndBreakIfReturningTrue: <K, V>(map: Map<K, V>, action: (value: V, key: K) => boolean) => void = someInMap;
 
-    export const someKeyInMap: (map: StringMap<any>, predicate: (key: string) => boolean) => boolean = fullyFeaturedMaps
-        ? (map: FullyFeaturedMap<any>, predicate: (key: string) => boolean) => someInIterator(map.keys(), predicate)
-        : <T>(map: StringMap<T>, predicate: (key: string) => boolean) =>
+    export const someKeyInMap: <K>(map: Map<K, any>, predicate: (key: K) => boolean) => boolean = fullyFeaturedMaps
+        ? <K>(map: FullyFeaturedMap<K, any>, predicate: (key: K) => boolean) => someInIterator(map.keys(), predicate)
+        : <K>(map: Map<K, any>, predicate: (key: K) => boolean) =>
             someInMap(map, (_value, key) => predicate(key));
 
     //only used in one place, kill? Write in terms of someInMap?
-    export const someValueInMap: <T>(map: StringMap<T>, predicate: (value: T) => boolean) => boolean = fullyFeaturedMaps
-        ? <T>(map: FullyFeaturedMap<T>, predicate: (value: T) => boolean) =>
+    export const someValueInMap: <T>(map: Map<any, T>, predicate: (value: T) => boolean) => boolean = fullyFeaturedMaps
+        ? <T>(map: FullyFeaturedMap<any, T>, predicate: (value: T) => boolean) =>
             someInIterator(map.values(), predicate)
         : someInMap;
 
@@ -222,9 +235,9 @@ namespace ts {
     }
 
     /** Equivalent to the ES6 code `for (const key of map.keys()) action(key)` */
-    export const forEachKeyInMap: (map: StringMap<any>, action: (key: string) => void) => void = fullyFeaturedMaps
-        ? (map: FullyFeaturedMap<any>, f: (key: string) => void) => {
-            const iter: Iterator<string> = map.keys();
+    export const forEachKeyInMap: <K>(map: Map<K, any>, action: (key: K) => void) => void = fullyFeaturedMaps
+        ? <K>(map: FullyFeaturedMap<K, any>, f: (key: K) => void) => {
+            const iter: Iterator<K> = map.keys();
             while (true) {
                 const { value: key, done } = iter.next();
                 if (done) {
@@ -233,7 +246,7 @@ namespace ts {
                 f(key);
             }
         }
-        : (map, action) => {
+        : <K>(map: Map<K, any>, action: (key: K) => void) => {
             map.forEach((_value, key) => action(key));
         };
 }
@@ -242,7 +255,7 @@ namespace ts {
 /* @internal */
 namespace ts {
     //document
-    export function modifyKeys<T>(map: StringMap<T>, alterKey: (key: string) => string): StringMap<T> {
+    export function modifyKeys<T>(map: Map<string, T>, alterKey: (key: string) => string): Map<string, T> {
         const newMap = new StringMap<T>();
         map.forEach((value, key) => {
             newMap.set(alterKey(key), value)
@@ -266,11 +279,11 @@ namespace ts {
         return naturals.concat(everythingElse);
     }
 
-    export function mapIsEmpty(map: StringMap<any>): boolean {
+    export function mapIsEmpty(map: Map<any, any>): boolean {
         return !someKeyInMap(map, () => true);
     }
 
-    export function mapOfMapLike<T>(object: MapLike<T>) {
+    export function mapOfMapLike<T>(object: MapLike<T>): Map<string, T> {
         const map = new StringMap<T>();
         // Copies keys/values from template. Note that for..in will not throw if
         // template is undefined, and instead will just exit the loop.
@@ -280,7 +293,7 @@ namespace ts {
         return map;
     }
 
-    export function mapLikeOfMap<T>(map: StringMap<T>): MapLike<T> {
+    export function mapLikeOfMap<T>(map: Map<string, T>): MapLike<T> {
         const obj = createDictionaryModeObject();
         map.forEach((value, key) => {
             obj[key] = value;
@@ -288,13 +301,14 @@ namespace ts {
         return obj;
     }
 
-    export function _mod<T>(map: StringMap<T>, key: string, modifier: (value: T) => T) {
+    //blah
+    export function _mod<K, V>(map: Map<K, V>, key: K, modifier: (value: V) => V) {
         map.set(key, modifier(map.get(key)));
     }
 
-    export function cloneMap<T>(map: StringMap<T>) {
+    export function cloneMap<T>(map: Map<string, T>) {
         const clone = new StringMap<T>();
-        copyMapPropertiesFromTo(map, clone);
+        copyMapEntriesFromTo(map, clone);
         return clone;
     }
 
@@ -304,59 +318,36 @@ namespace ts {
      * @param source A map from which properties should be copied.
      * @param target A map to which properties should be copied.
      */
-    //rename : "entries", not "properties"
-    export function copyMapPropertiesFromTo<T>(source: StringMap<T>, target: StringMap<T>): void {
+    export function copyMapEntriesFromTo<K, V>(source: Map<K, V>, target: Map<K, V>): void {
         source.forEach((value, key) => {
             target.set(key, value);
         });
     }
 
-    //neater
-    export function copyNumberMapPropertiesFromTo<K extends number, V>(source: NumberMap<K, V>, target: NumberMap<K, V>): void {
-        source.forEach((value, key) => {
-            target.set(key, value);
-        });
-    }
-
-    /**
-     * Reduce the properties of a map.
-     *
-     * NOTE: This is intended for use with Map<T> objects. For MapLike<T> objects, use
-     *       reduceOwnProperties instead as it offers better runtime safety.
-     *
-     * @param map The map to reduce
-     * @param callback An aggregation function that is called for each entry in the map
-     * @param initial The initial value for the reduction.
-     */
-    //KILL!
-    export function reduceProperties<T, U>(map: StringMap<T>, callback: (aggregate: U, value: T, key: string) => U, initial: U): U {
-        let result = initial;
-        map.forEach((value, key) => {
-            result = callback(result, value, String(key)); //why cast to string???
-        });
-        return result;
-    }
-
-    export function _mapValuesMutate<T>(map: StringMap<T>, mapValue: (value: T) => T): void {
+    export function _mapValuesMutate<V>(map: Map<any, V>, mapValue: (value: V) => V): void {
         map.forEach((value, key) => {
             map.set(key, mapValue(value));
         });
     }
 
-    //review
-    export function _ownKeys<T>(map: StringMap<T>): string[] {
-        const keys: string[] = [];
-        forEachKeyInMap(map, key => {
-            keys.push(key);
-        });
+    //rename to keysOfMap
+    export function _ownKeys<K>(map: Map<K, any>): K[] {
+        const keys: K[] = [];
+        forEachKeyInMap(map, key => { keys.push(key); });
         return keys;
     }
 
-    export function _getOrUpdate<T>(map: StringMap<T>, key: string, getValue: (key: string) => T): T {
+    export function valuesOfMap<V>(map: Map<any, V>): V[] {
+        const values: V[] = [];
+        map.forEach((value) => { values.push(value) });
+        return values;
+    }
+
+    export function _getOrUpdate<K, V>(map: Map<K, V>, key: K, getValue: (key: K) => V): V {
         return map.has(key) ? map.get(key) : setAndReturn(map, key, getValue(key));
     }
 
-    export function _setIfNotSet<T>(map: StringMap<T>, key: string, getValue: (key: string) => T): void {
+    export function _setIfNotSet<K, V>(map: Map<K, V>, key: K, getValue: (key: K) => V): void {
         if (!map.has(key)) {
             map.set(key, getValue(key));
         }
@@ -372,9 +363,9 @@ namespace ts {
      * the same key with the given 'makeKey' function, then the element with the higher
      * index in the array will be the one associated with the produced key.
      */
-    export function arrayToMap<T>(array: T[], makeKey: (value: T) => string): StringMap<T>;
-    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue: (value: T) => U): StringMap<U>;
-    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue?: (value: T) => U): StringMap<T | U> {
+    export function arrayToMap<T>(array: T[], makeKey: (value: T) => string): Map<string, T>;
+    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue: (value: T) => U): Map<string, U>;
+    export function arrayToMap<T, U>(array: T[], makeKey: (value: T) => string, makeValue?: (value: T) => U): Map<string, T | U> {
         const result = new StringMap<T | U>();
         for (const value of array) {
             result.set(makeKey(value), makeValue ? makeValue(value) : value);
@@ -386,7 +377,7 @@ namespace ts {
      * Adds the value to an array of values associated with the key, and returns the array.
      * Creates the array if it does not already exist.
      */
-    export function multiMapAdd<V>(map: StringMap<V[]>, key: string, value: V): V[] {
+    export function multiMapAdd<K, V>(map: Map<K, V[]>, key: K, value: V): V[] {
         const values = map.get(key);
         if (values) {
             values.push(value);
@@ -402,7 +393,7 @@ namespace ts {
      * Does not preserve the order of those values.
      * Does nothing if `key` is not in `map`, or `value` is not in `map[key]`.
      */
-    export function multiMapRemove<V>(map: StringMap<V[]>, key: string, value: V): void {
+    export function multiMapRemove<K, V>(map: Map<K, V[]>, key: K, value: V): void {
         const values = map.get(key);
         if (values) {
             unorderedRemoveItem(values, value);
@@ -413,7 +404,7 @@ namespace ts {
     }
 
     //todo: neater
-    export function _equalMaps<T>(left: StringMap<T>, right: StringMap<T>, equalityComparer?: (left: T, right: T) => boolean) {
+    export function _equalMaps<K, V>(left: Map<K, V>, right: Map<K, V>, equalityComparer?: (left: V, right: V) => boolean) {
         if (left === right) return true;
         if (!left || !right) return false;
         const someInLeftHasNoMatch = someInMap(left, (leftValue, leftKey) => {
@@ -428,6 +419,7 @@ namespace ts {
 }
 
 
+// Set
 /* @internal */
 namespace ts {
     class ShimStringSet implements StringSet {
@@ -479,6 +471,20 @@ namespace ts {
 
     function copySetValuesFromTo<T>(source: StringSet, target: StringSet): void {
         source.forEach(value => target.add(value));
+    }
+}
+
+//Set extensions
+/* @internal */
+namespace ts {
+    //move
+    export function filterSetToArray(set: StringSet, keepIf: (value: string) => boolean): string[] {
+        const result: string[] = [];
+        set.forEach(value => {
+            if (keepIf(value))
+                result.push(value);
+        });
+        return result;
     }
 }
 
@@ -540,7 +546,6 @@ namespace ts {
      *
      * @param map A map-like.
      */
-    //review uses
     export function getOwnKeys<T>(map: MapLike<T>): string[] {
         const keys: string[] = [];
         for (const key in map) if (hasOwnProperty.call(map, key)) {
@@ -561,12 +566,8 @@ namespace ts {
         return t;
     }
 
-    //kill?
     /**
      * Reduce the properties defined on a map-like (but not from its prototype chain).
-     *
-     * NOTE: This is intended for use with MapLike<T> objects. For Map<T> objects, use
-     *       reduceProperties instead as it offers better performance.
      *
      * @param map The map-like to reduce
      * @param callback An aggregation function that is called for each entry in the map

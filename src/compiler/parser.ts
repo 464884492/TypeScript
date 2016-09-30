@@ -490,7 +490,7 @@ namespace ts {
         let currentToken: SyntaxKind;
         let sourceText: string;
         let nodeCount: number;
-        let identifiers: StringMap<string>;
+        let identifiers: Map<string, string>;
         let identifierCount: number;
 
         let parsingContext: ParsingContext;

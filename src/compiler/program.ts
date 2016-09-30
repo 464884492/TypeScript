@@ -132,7 +132,7 @@ namespace ts {
             }
         }
 
-        let outputFingerprints: StringMap<OutputFingerprint>;
+        let outputFingerprints: Map<string, OutputFingerprint>;
 
         function writeFileIfUpdated(fileName: string, data: string, writeByteOrderMark: boolean): void {
             if (!outputFingerprints) {

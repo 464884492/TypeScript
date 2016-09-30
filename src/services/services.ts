@@ -456,13 +456,13 @@ namespace ts {
         public scriptKind: ScriptKind;
         public languageVersion: ScriptTarget;
         public languageVariant: LanguageVariant;
-        public identifiers: StringMap<string>;
-        public nameTable: StringMap<number>;
-        public resolvedModules: StringMap<ResolvedModule>;
-        public resolvedTypeReferenceDirectiveNames: StringMap<ResolvedTypeReferenceDirective>;
+        public identifiers: Map<string, string>;
+        public nameTable: Map<string, number>;
+        public resolvedModules: Map<string, ResolvedModule>;
+        public resolvedTypeReferenceDirectiveNames: Map<string, ResolvedTypeReferenceDirective>;
         public imports: LiteralExpression[];
         public moduleAugmentations: LiteralExpression[];
-        private namedDeclarations: StringMap<Declaration[]>;
+        private namedDeclarations: Map<string, Declaration[]>;
 
         constructor(kind: SyntaxKind, pos: number, end: number) {
             super(kind, pos, end);
@@ -484,7 +484,7 @@ namespace ts {
             return ts.getPositionOfLineAndCharacter(this, line, character);
         }
 
-        public getNamedDeclarations(): StringMap<Declaration[]> {
+        public getNamedDeclarations(): Map<string, Declaration[]> {
             if (!this.namedDeclarations) {
                 this.namedDeclarations = this.computeNamedDeclarations();
             }
@@ -492,7 +492,7 @@ namespace ts {
             return this.namedDeclarations;
         }
 
-        private computeNamedDeclarations(): StringMap<Declaration[]> {
+        private computeNamedDeclarations(): Map<string, Declaration[]> {
             const result = new StringMap<Declaration[]>();
 
             forEachChild(this, visit);
@@ -1863,7 +1863,7 @@ namespace ts {
     }
 
     /* @internal */
-    export function getNameTable(sourceFile: SourceFile): StringMap<number> {
+    export function getNameTable(sourceFile: SourceFile): Map<string, number> {
         if (!sourceFile.nameTable) {
             initializeNameTable(sourceFile);
         }

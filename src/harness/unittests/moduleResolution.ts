@@ -280,7 +280,7 @@ namespace ts {
     });
 
     describe("Module resolution - relative imports", () => {
-        function test(files: StringMap<string>, currentDirectory: string, rootFiles: string[], expectedFilesCount: number, relativeNamesToCheck: string[]) {
+        function test(files: Map<string, string>, currentDirectory: string, rootFiles: string[], expectedFilesCount: number, relativeNamesToCheck: string[]) {
             const options: CompilerOptions = { module: ModuleKind.CommonJS };
             const host: CompilerHost = {
                 getSourceFile: (fileName: string, languageVersion: ScriptTarget) => {
@@ -353,7 +353,7 @@ export = C;
 
     describe("Files with different casing", () => {
         const library = createSourceFile("lib.d.ts", "", ScriptTarget.ES5);
-        function test(files: StringMap<string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
+        function test(files: Map<string, string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
             const getCanonicalFileName = createGetCanonicalFileName(useCaseSensitiveFileNames);
             if (!useCaseSensitiveFileNames) {
                 files = modifyKeys(files, getCanonicalFileName);

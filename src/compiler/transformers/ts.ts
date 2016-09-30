@@ -63,7 +63,7 @@ namespace ts {
          * A map that keeps track of aliases created for classes with decorators to avoid issues
          * with the double-binding behavior of classes.
          */
-        let classAliases: NumberMap<number, Identifier>;
+        let classAliases: Map<number, Identifier>;
 
         /**
          * Keeps track of whether  we are within any containing namespaces when performing

@@ -16,9 +16,9 @@ namespace ts.performance {
 
     let enabled = false;
     let profilerStart = 0;
-    let counts: StringMap<number>;
-    let marks: StringMap<number>;
-    let measures: StringMap<number>;
+    let counts: Map<string, number>;
+    let marks: Map<string, number>;
+    let measures: Map<string, number>;
 
     /**
      * Marks a performance event.

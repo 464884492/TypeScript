@@ -35,12 +35,12 @@ namespace ts {
 
         let currentSourceFile: SourceFile;
         let externalImports: (ImportDeclaration | ImportEqualsDeclaration | ExportDeclaration)[];
-        let exportSpecifiers: StringMap<ExportSpecifier[]>;
+        let exportSpecifiers: Map<string, ExportSpecifier[]>;
         let exportEquals: ExportAssignment;
-        let bindingNameExportSpecifiersMap: StringMap<ExportSpecifier[]>;
+        let bindingNameExportSpecifiersMap: Map<string, ExportSpecifier[]>;
         // Subset of exportSpecifiers that is a binding-name.
         // This is to reduce amount of memory we have to keep around even after we done with module-transformer
-        const bindingNameExportSpecifiersForFileMap = new NumberMap<number, StringMap<ExportSpecifier[]>>();
+        const bindingNameExportSpecifiersForFileMap = new NumberMap<number, Map<string, ExportSpecifier[]>>();
         let hasExportStarsToExportValues: boolean;
 
         return transformSourceFile;

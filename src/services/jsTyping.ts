@@ -27,7 +27,7 @@ namespace ts.JsTyping {
 
     // A map of loose file names to library names
     // that we are confident require typings
-    let safeList: StringMap<string>;
+    let safeList: Map<string, string>;
 
     const EmptySafeList = new StringMap<string>();
 
@@ -45,7 +45,7 @@ namespace ts.JsTyping {
         fileNames: string[],
         projectRootPath: Path,
         safeListPath: Path,
-        packageNameToTypingLocation: StringMap<string>,
+        packageNameToTypingLocation: Map<string, string>,
         typingOptions: TypingOptions,
         compilerOptions: CompilerOptions):
         { cachedTypingPaths: string[], newTypingNames: string[], filesToWatch: string[] } {

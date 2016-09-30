@@ -218,7 +218,7 @@ namespace ts {
         const mergedSymbols: Symbol[] = [];
         const symbolLinks: SymbolLinks[] = [];
         const nodeLinks: NodeLinks[] = [];
-        const flowLoopCaches: StringMap<Type>[] = [];
+        const flowLoopCaches: Map<string, Type>[] = [];
         const flowLoopNodes: FlowNode[] = [];
         const flowLoopKeys: string[] = [];
         const flowLoopTypes: Type[][] = [];
@@ -1447,7 +1447,7 @@ namespace ts {
          * Extends one symbol table with another while collecting information on name collisions for error message generation into the `lookupTable` argument
          * Not passing `lookupTable` and `exportNode` disables this collection, and just extends the tables
          */
-        function extendExportSymbols(target: SymbolTable, source: SymbolTable, lookupTable?: StringMap<ExportCollisionTracker>, exportNode?: ExportDeclaration) {
+        function extendExportSymbols(target: SymbolTable, source: SymbolTable, lookupTable?: Map<string, ExportCollisionTracker>, exportNode?: ExportDeclaration) {
             if (!source) return;
 
             source.forEach((sourceSymbol, id) => {
@@ -6322,7 +6322,7 @@ namespace ts {
             return setAndReturn(enumRelation, id, true);
         }
 
-        function isSimpleTypeRelatedTo(source: Type, target: Type, relation: StringMap<RelationComparisonResult>, errorReporter?: ErrorReporter) {
+        function isSimpleTypeRelatedTo(source: Type, target: Type, relation: Map<string, RelationComparisonResult>, errorReporter?: ErrorReporter) {
             if (target.flags & TypeFlags.Never) return false;
             if (target.flags & TypeFlags.Any || source.flags & TypeFlags.Never) return true;
             if (source.flags & TypeFlags.StringLike && target.flags & TypeFlags.String) return true;
@@ -6350,7 +6350,7 @@ namespace ts {
             return false;
         }
 
-        function isTypeRelatedTo(source: Type, target: Type, relation: StringMap<RelationComparisonResult>) {
+        function isTypeRelatedTo(source: Type, target: Type, relation: Map<string, RelationComparisonResult>) {
             if (source.flags & TypeFlags.StringOrNumberLiteral && source.flags & TypeFlags.FreshLiteral) {
                 source = (<LiteralType>source).regularType;
             }
@@ -6386,7 +6386,7 @@ namespace ts {
         function checkTypeRelatedTo(
             source: Type,
             target: Type,
-            relation: StringMap<RelationComparisonResult>,
+            relation: Map<string, RelationComparisonResult>,
             errorNode: Node,
             headMessage?: DiagnosticMessage,
             containingMessageChain?: DiagnosticMessageChain): boolean {
@@ -6394,7 +6394,7 @@ namespace ts {
             let errorInfo: DiagnosticMessageChain;
             let sourceStack: ObjectType[];
             let targetStack: ObjectType[];
-            let maybeStack: StringMap<RelationComparisonResult>[];
+            let maybeStack: Map<string, RelationComparisonResult>[];
             let expandingFlags: number;
             let depth = 0;
             let overflow = false;
@@ -6820,7 +6820,7 @@ namespace ts {
                     const maybeCache = maybeStack[depth];
                     // If result is definitely true, copy assumptions to global cache, else copy to next level up
                     const destinationCache = (result === Ternary.True || depth === 0) ? relation : maybeStack[depth - 1];
-                    copyMapPropertiesFromTo(maybeCache, destinationCache);
+                    copyMapEntriesFromTo(maybeCache, destinationCache);
                 }
                 else {
                     // A false result goes straight into global cache (when something is false under assumptions it
@@ -11573,7 +11573,7 @@ namespace ts {
             return typeArgumentsAreAssignable;
         }
 
-        function checkApplicableSignature(node: CallLikeExpression, args: Expression[], signature: Signature, relation: StringMap<RelationComparisonResult>, excludeArgument: boolean[], reportErrors: boolean) {
+        function checkApplicableSignature(node: CallLikeExpression, args: Expression[], signature: Signature, relation: Map<string, RelationComparisonResult>, excludeArgument: boolean[], reportErrors: boolean) {
             const thisType = getThisTypeOfSignature(signature);
             if (thisType && thisType !== voidType && node.kind !== SyntaxKind.NewExpression) {
                 // If the called expression is not of the form `x.f` or `x["f"]`, then sourceType = voidType
@@ -12107,7 +12107,7 @@ namespace ts {
                 diagnostics.add(createDiagnosticForNodeFromMessageChain(node, errorInfo));
             }
 
-            function chooseOverload(candidates: Signature[], relation: StringMap<RelationComparisonResult>, signatureHelpTrailingComma = false) {
+            function chooseOverload(candidates: Signature[], relation: Map<string, RelationComparisonResult>, signatureHelpTrailingComma = false) {
                 for (const originalCandidate of candidates) {
                     if (!hasCorrectArity(node, args, originalCandidate, signatureHelpTrailingComma)) {
                         continue;
@@ -14283,7 +14283,7 @@ namespace ts {
                 }
             }
 
-            function addName(names: StringMap<Accessor>, location: Node, name: string, meaning: Accessor) {
+            function addName(names: Map<string, Accessor>, location: Node, name: string, meaning: Accessor) {
                 const prev = names.get(name);
                 if (prev) {
                     if (prev & meaning) {
@@ -17038,7 +17038,7 @@ namespace ts {
                 return true;
             }
 
-            const seen: StringMap<{ prop: Symbol; containingType: Type }> = arrayToMap(resolveDeclaredMembers(type).declaredProperties, p => p.name, p => ({ prop: p, containingType: type }));
+            const seen: Map<string, { prop: Symbol; containingType: Type }> = arrayToMap(resolveDeclaredMembers(type).declaredProperties, p => p.name, p => ({ prop: p, containingType: type }));
             let ok = true;
 
             for (const base of baseTypes) {

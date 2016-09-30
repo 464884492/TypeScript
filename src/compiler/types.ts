@@ -1,25 +1,16 @@
 namespace ts {
     /**
      * Type of objects whose values are all of the same type.
-     * Unlike with OldMap, the `in` and `for-in` operators can not be safely used.
+     * The `in` and `for-in` operators can *not* be safely used,
+     * since `Object.prototype` may be modified by outside code.
     */
     export interface MapLike<T> {
         [index: string]: T;
     }
 
     /**
-     * Type of objects with a null prototype, meant to be used only as dictionaries.
-     * Prefer to use StringMap.
-     */
-    //rename
-    export interface OldMap<T> {
-        __oldMapBrand: any;
-        [key: string]: T;
-    }
-
-    /**
-     * This contains just the parts of ES6's `Map` interface that we can safely use.
-     * Map can't be directly instantiated; only StringMap and NumberMap can, as those are shimmable.
+     * This contains just the parts of ES6's `Map` interface that we allow.
+     * Map can only be instantiated using NumberMap and StringMap, which come with shims.
      *
      * Internet Explorer does not support iterator-returning methods, so those are not allowed here.
      * But map-using functions in dataStructures.ts check for these features and use them where possible.
@@ -38,19 +29,11 @@ namespace ts {
         forEach(action: (value: V, key: K) => void): void;
     }
 
-    /** In runtimes without Maps, this is implemented using an object in dictionary mode. */
-    export type StringMap<T> = Map<string, T>;
-
-    /**
-     * In runtimes without Maps, this is implemented using a sparse array.
-     * This is generic over the key type because it is usually an enum.
-     */
-    export type NumberMap<K extends number, V> = Map<K, V>
-
     /** Represents a set of strings.
      * Usually this is the builtin Set class.
      * In runtimes without Sets, this is implemented using a StringMap with dummy values.
      */
+    //TODO: just use Set<T>
     export interface StringSet {
         add(value: string): void;
         has(value: string): boolean;
@@ -1807,7 +1790,7 @@ namespace ts {
 
         // this map is used by transpiler to supply alternative names for dependencies (i.e. in case of bundling)
         /* @internal */
-        renamedDependencies?: StringMap<string>;
+        renamedDependencies?: Map<string, string>;
 
         /**
          * lib.d.ts should have a reference comment like
@@ -1827,7 +1810,7 @@ namespace ts {
         // The first node that causes this file to be a CommonJS module
         /* @internal */ commonJsModuleIndicator: Node;
 
-        /* @internal */ identifiers: StringMap<string>;
+        /* @internal */ identifiers: Map<string, string>;
         /* @internal */ nodeCount: number;
         /* @internal */ identifierCount: number;
         /* @internal */ symbolCount: number;
@@ -1846,8 +1829,8 @@ namespace ts {
         // Stores a mapping 'external module reference text' -> 'resolved file name' | undefined
         // It is used to resolve module names in the checker.
         // Content of this field should never be used directly - use getResolvedModuleFileName/setResolvedModuleFileName functions instead
-        /* @internal */ resolvedModules: StringMap<ResolvedModule>;
-        /* @internal */ resolvedTypeReferenceDirectiveNames: StringMap<ResolvedTypeReferenceDirective>;
+        /* @internal */ resolvedModules: Map<string, ResolvedModule>;
+        /* @internal */ resolvedTypeReferenceDirectiveNames: Map<string, ResolvedTypeReferenceDirective>;
         /* @internal */ imports: LiteralExpression[];
         /* @internal */ moduleAugmentations: LiteralExpression[];
         /* @internal */ patternAmbientModules?: PatternAmbientModule[];
@@ -1939,7 +1922,7 @@ namespace ts {
         /* @internal */ getTypeCount(): number;
 
         /* @internal */ getFileProcessingDiagnostics(): DiagnosticCollection;
-        /* @internal */ getResolvedTypeReferenceDirectives(): StringMap<ResolvedTypeReferenceDirective>;
+        /* @internal */ getResolvedTypeReferenceDirectives(): Map<string, ResolvedTypeReferenceDirective>;
         // For testing purposes only.
         /* @internal */ structureIsReused?: boolean;
     }
@@ -2000,7 +1983,7 @@ namespace ts {
 
         getSourceFiles(): SourceFile[];
         getSourceFile(fileName: string): SourceFile;
-        getResolvedTypeReferenceDirectives(): StringMap<ResolvedTypeReferenceDirective>;
+        getResolvedTypeReferenceDirectives(): Map<string, ResolvedTypeReferenceDirective>;
     }
 
     export interface TypeChecker {
@@ -2335,7 +2318,7 @@ namespace ts {
         declaredType?: Type;                // Type of class, interface, enum, type alias, or type parameter
         typeParameters?: TypeParameter[];   // Type parameters of type alias (undefined if non-generic)
         inferredClassType?: Type;           // Type of an inferred ES5 class
-        instantiations?: StringMap<Type>;         // Instantiations of generic type alias (undefined if non-generic)
+        instantiations?: Map<string, Type>;         // Instantiations of generic type alias (undefined if non-generic)
         mapper?: TypeMapper;                // Type mapper for instantiation alias
         referenced?: boolean;               // True if alias symbol has been referenced as a value
         containingType?: UnionOrIntersectionType; // Containing union or intersection type for synthetic property
@@ -2352,7 +2335,7 @@ namespace ts {
     /* @internal */
     export interface TransientSymbol extends Symbol, SymbolLinks { }
 
-    export type SymbolTable = StringMap<Symbol>;
+    export type SymbolTable = Map<string, Symbol>;
 
     /** Represents a "prefix*suffix" pattern. */
     /* @internal */
@@ -2504,7 +2487,7 @@ namespace ts {
 
     // Enum types (TypeFlags.Enum)
     export interface EnumType extends Type {
-        memberTypes: NumberMap<number, EnumLiteralType>;
+        memberTypes: Map<number, EnumLiteralType>;
     }
 
     // Enum types (TypeFlags.EnumLiteral)
@@ -2551,7 +2534,7 @@ namespace ts {
     // Generic class and interface types
     export interface GenericType extends InterfaceType, TypeReference {
         /* @internal */
-        instantiations: StringMap<TypeReference>;   // Generic instantiation cache
+        instantiations: Map<string, TypeReference>;   // Generic instantiation cache
     }
 
     export interface UnionOrIntersectionType extends Type {
@@ -2917,7 +2900,7 @@ namespace ts {
     /* @internal */
     export interface CommandLineOptionBase {
         name: string;
-        type: "string" | "number" | "boolean" | "object" | "list" | StringMap<number | string>;    // a value of a primitive type, or an object literal mapping named values to actual values
+        type: "string" | "number" | "boolean" | "object" | "list" | Map<string, number | string>;    // a value of a primitive type, or an object literal mapping named values to actual values
         isFilePath?: boolean;                                   // True if option value is a path or fileName
         shortName?: string;                                     // A short mnemonic for convenience - for instance, 'h' can be used in place of 'help'
         description?: DiagnosticMessage;                        // The message describing what the command line switch does
@@ -2933,7 +2916,7 @@ namespace ts {
 
     /* @internal */
     export interface CommandLineOptionOfCustomType extends CommandLineOptionBase {
-        type: StringMap<number | string>;  // an object literal mapping named values to actual values
+        type: Map<string, number | string>;  // an object literal mapping named values to actual values
     }
 
     /* @internal */
@@ -3226,7 +3209,7 @@ namespace ts {
         flags?: EmitFlags;
         commentRange?: TextRange;
         sourceMapRange?: TextRange;
-        tokenSourceMapRanges?: NumberMap<SyntaxKind, TextRange>;
+        tokenSourceMapRanges?: Map<SyntaxKind, TextRange>;
         annotatedNodes?: Node[];                // Tracks Parse-tree nodes with EmitNodes for eventual cleanup.
         constantValue?: number;
     }

@@ -5,8 +5,8 @@
 namespace ts.server {
     export class LSHost implements ts.LanguageServiceHost, ModuleResolutionHost, ServerLanguageServiceHost {
         private compilationSettings: ts.CompilerOptions;
-        private readonly resolvedModuleNames: ts.FileMap<StringMap<ResolvedModuleWithFailedLookupLocations>>;
-        private readonly resolvedTypeReferenceDirectives: ts.FileMap<StringMap<ResolvedTypeReferenceDirectiveWithFailedLookupLocations>>;
+        private readonly resolvedModuleNames: ts.FileMap<Map<string, ResolvedModuleWithFailedLookupLocations>>;
+        private readonly resolvedTypeReferenceDirectives: ts.FileMap<Map<string, ResolvedTypeReferenceDirectiveWithFailedLookupLocations>>;
         private readonly getCanonicalFileName: (fileName: string) => string;
 
         private readonly resolveModuleName: typeof resolveModuleName;
@@ -14,8 +14,8 @@ namespace ts.server {
 
         constructor(private readonly host: ServerHost, private readonly project: Project, private readonly cancellationToken: HostCancellationToken) {
             this.getCanonicalFileName = ts.createGetCanonicalFileName(this.host.useCaseSensitiveFileNames);
-            this.resolvedModuleNames = createFileMap<StringMap<ResolvedModuleWithFailedLookupLocations>>();
-            this.resolvedTypeReferenceDirectives = createFileMap<StringMap<ResolvedTypeReferenceDirectiveWithFailedLookupLocations>>();
+            this.resolvedModuleNames = createFileMap<Map<string, ResolvedModuleWithFailedLookupLocations>>();
+            this.resolvedTypeReferenceDirectives = createFileMap<Map<string, ResolvedTypeReferenceDirectiveWithFailedLookupLocations>>();
 
             if (host.trace) {
                 this.trace = s => host.trace(s);
@@ -55,7 +55,7 @@ namespace ts.server {
         private resolveNamesWithLocalCache<T extends { failedLookupLocations: string[] }, R>(
             names: string[],
             containingFile: string,
-            cache: ts.FileMap<StringMap<T>>,
+            cache: ts.FileMap<Map<string, T>>,
             loader: (name: string, containingFile: string, options: CompilerOptions, host: ModuleResolutionHost) => T,
             getResult: (s: T) => R): R[] {
 

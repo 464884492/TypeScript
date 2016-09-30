@@ -716,7 +716,7 @@ namespace ts.server {
                 files: parsedCommandLine.fileNames,
                 compilerOptions: parsedCommandLine.options,
                 configHasFilesProperty: config["files"] !== undefined,
-                wildcardDirectories: createOldMap(parsedCommandLine.wildcardDirectories),
+                wildcardDirectories: parsedCommandLine.wildcardDirectories,
                 typingOptions: parsedCommandLine.typingOptions,
                 compileOnSave: parsedCommandLine.compileOnSave
             };
@@ -772,7 +772,7 @@ namespace ts.server {
                 this.documentRegistry,
                 projectOptions.configHasFilesProperty,
                 projectOptions.compilerOptions,
-                mapOfMapLike(projectOptions.wildcardDirectories), //review
+                mapOfMapLike(projectOptions.wildcardDirectories),
                 /*languageServiceEnabled*/ !sizeLimitExceeded,
                 projectOptions.compileOnSave === undefined ? false : projectOptions.compileOnSave);
 

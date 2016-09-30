@@ -47,7 +47,7 @@ namespace ts.server {
         /**
          * Set of files that was returned from the last call to getChangesSinceVersion.
          */
-        private lastReportedFileNames: StringMap<string>;
+        private lastReportedFileNames: Map<string, string>;
         /**
          * Last version that was reported.
          */
@@ -574,7 +574,7 @@ namespace ts.server {
         private typingOptions: TypingOptions;
         private projectFileWatcher: FileWatcher;
         private directoryWatcher: FileWatcher;
-        private directoriesWatchedForWildcards: StringMap<FileWatcher>;
+        private directoriesWatchedForWildcards: Map<string, FileWatcher>;
         private typeRootsWatchers: FileWatcher[];
 
         /** Used for configured projects which may have multiple open roots */
@@ -585,7 +585,7 @@ namespace ts.server {
             documentRegistry: ts.DocumentRegistry,
             hasExplicitListOfFiles: boolean,
             compilerOptions: CompilerOptions,
-            private wildcardDirectories: StringMap<WatchDirectoryFlags>,
+            private wildcardDirectories: Map<string, WatchDirectoryFlags>,
             languageServiceEnabled: boolean,
             public compileOnSaveEnabled: boolean) {
             super(ProjectKind.Configured, projectService, documentRegistry, hasExplicitListOfFiles, languageServiceEnabled, compilerOptions, compileOnSaveEnabled);
