@@ -142,11 +142,11 @@ namespace ts {
             const hash = sys.createHash(data);
             const mtimeBefore = sys.getModifiedTime(fileName);
 
-            if (mtimeBefore && outputFingerprints.has(fileName)) {
+            if (mtimeBefore) {
                 const fingerprint = outputFingerprints.get(fileName);
 
                 // If output has not been changed, and the file has no external modification
-                if (fingerprint.byteOrderMark === writeByteOrderMark &&
+                if (fingerprint !== undefined && fingerprint.byteOrderMark === writeByteOrderMark &&
                     fingerprint.hash === hash &&
                     fingerprint.mtime.getTime() === mtimeBefore.getTime()) {
                     return;
@@ -1137,8 +1137,8 @@ namespace ts {
 
         // Get source file from normalized fileName
         function findSourceFile(fileName: string, path: Path, isDefaultLib: boolean, isReference: boolean, refFile?: SourceFile, refPos?: number, refEnd?: number): SourceFile {
-            if (filesByName.contains(path)) {
-                const file = filesByName.get(path);
+            let file = filesByName.get(path);
+            if (file !== undefined) {
                 // try to check if we've already seen this file but with a different casing in path
                 // NOTE: this only makes sense for case-insensitive file systems
                 if (file && options.forceConsistentCasingInFileNames && getNormalizedAbsolutePath(file.fileName, currentDirectory) !== getNormalizedAbsolutePath(fileName, currentDirectory)) {
@@ -1169,7 +1169,7 @@ namespace ts {
             }
 
             // We haven't looked for this file, do so now and cache result
-            const file = host.getSourceFile(fileName, options.target, hostErrorMessage => {
+            file = host.getSourceFile(fileName, options.target, hostErrorMessage => {
                 if (refFile !== undefined && refPos !== undefined && refEnd !== undefined) {
                     fileProcessingDiagnostics.add(createFileDiagnostic(refFile, refPos, refEnd - refPos,
                         Diagnostics.Cannot_read_file_0_Colon_1, fileName, hostErrorMessage));

@@ -579,7 +579,8 @@ namespace ts {
         }
 
         function addExportMemberAssignments(statements: Statement[], name: Identifier): void {
-            if (!exportEquals && exportSpecifiers && exportSpecifiers.has(name.text)) {
+            const specifiers = !exportEquals && exportSpecifiers && exportSpecifiers.get(name.text);
+            if (specifiers) {
                 for (const specifier of exportSpecifiers.get(name.text)) {
                     statements.push(
                         startOnNewLine(
@@ -667,12 +668,11 @@ namespace ts {
                 }
             }
             else {
-                if (!exportEquals && exportSpecifiers && exportSpecifiers.has(name.text)) {
+                const specifiers = !exportEquals && exportSpecifiers && exportSpecifiers.get(name.text);
+                if (specifiers) {
                     const sourceFileId = getOriginalNodeId(currentSourceFile);
-                    if (!bindingNameExportSpecifiersForFileMap.get(sourceFileId)) {
-                        bindingNameExportSpecifiersForFileMap.set(sourceFileId, new StringMap<ExportSpecifier[]>());
-                    }
-                    bindingNameExportSpecifiersForFileMap.get(sourceFileId).set(name.text, exportSpecifiers.get(name.text));
+                    const bindingNameExportSpecifiers = getOrUpdate(bindingNameExportSpecifiersForFileMap, sourceFileId, () => new StringMap());
+                    bindingNameExportSpecifiers.set(name.text, exportSpecifiers.get(name.text));
                     addExportMemberAssignments(resultStatements, name);
                 }
             }

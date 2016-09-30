@@ -1180,8 +1180,11 @@ namespace ts {
             const len = tokenValue.length;
             if (len >= 2 && len <= 11) {
                 const ch = tokenValue.charCodeAt(0);
-                if (ch >= CharacterCodes.a && ch <= CharacterCodes.z && textToToken.has(tokenValue)) {
-                    return token = textToToken.get(tokenValue);
+                if (ch >= CharacterCodes.a && ch <= CharacterCodes.z) {
+                    token = textToToken.get(tokenValue);
+                    if (token !== undefined) {
+                        return token;
+                    }
                 }
             }
             return token = SyntaxKind.Identifier;

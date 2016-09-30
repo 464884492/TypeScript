@@ -571,13 +571,13 @@ namespace ts {
                     s = s.slice(s.charCodeAt(1) === CharacterCodes.minus ? 2 : 1).toLowerCase();
 
                     // Try to translate short option names to their full equivalents.
-                    if (shortOptionNames.has(s)) {
-                        s = shortOptionNames.get(s);
+                    const short = shortOptionNames.get(s);
+                    if (short !== undefined) {
+                        s = short;
                     }
 
-                    if (optionNameMap.has(s)) {
-                        const opt = optionNameMap.get(s);
-
+                    const opt = optionNameMap.get(s);
+                    if (opt !== undefined) {
                         if (opt.isTSConfigOnly) {
                             errors.push(createCompilerDiagnostic(Diagnostics.Option_0_can_only_be_specified_in_tsconfig_json_file, opt.name));
                         }
@@ -998,8 +998,8 @@ namespace ts {
         const optionNameMap = arrayToMap(optionDeclarations, opt => opt.name);
 
         for (const id in jsonOptions) {
-            if (optionNameMap.has(id)) {
-                const opt = optionNameMap.get(id);
+            const opt = optionNameMap.get(id);
+            if (opt !== undefined) {
                 defaultOptions[opt.name] = convertJsonOption(opt, jsonOptions[id], basePath, errors);
             }
             else {
@@ -1035,8 +1035,9 @@ namespace ts {
 
     function convertJsonOptionOfCustomType(opt: CommandLineOptionOfCustomType, value: string, errors: Diagnostic[]) {
         const key = value.toLowerCase();
-        if (opt.type.has(key)) {
-            return opt.type.get(key);
+        const val = opt.type.get(key);
+        if (val !== undefined) {
+            return val;
         }
         else {
             errors.push(createCompilerDiagnosticForInvalidCustomType(opt));
