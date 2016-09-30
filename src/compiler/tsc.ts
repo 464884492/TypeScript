@@ -441,9 +441,6 @@ namespace ts {
             return cachedExistingFiles.has(fileName)
                 ? cachedExistingFiles.get(fileName)
                 : setAndReturn(cachedExistingFiles, fileName, hostFileExists(fileName));
-            //return fileName in cachedExistingFiles
-            //     ? cachedExistingFiles[fileName]
-            //    : cachedExistingFiles[fileName] = hostFileExists(fileName);
         }
 
         function getSourceFile(fileName: string, languageVersion: ScriptTarget, onError?: (message: string) => void) {

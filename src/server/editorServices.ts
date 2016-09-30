@@ -830,7 +830,7 @@ namespace ts.server {
         private updateNonInferredProject<T>(project: ExternalProject | ConfiguredProject, newUncheckedFiles: T[], propertyReader: FilePropertyReader<T>, newOptions: CompilerOptions, newTypingOptions: TypingOptions, compileOnSave: boolean, configFileErrors: Diagnostic[]) {
             const oldRootScriptInfos = project.getRootScriptInfos();
             const newRootScriptInfos: ScriptInfo[] = [];
-            const newRootScriptInfoMap: NormalizedPathMap<ScriptInfo> = createNormalizedPathMap<ScriptInfo>();
+            const newRootScriptInfoMap: Map<NormalizedPath, ScriptInfo> = new StringMap<ScriptInfo>();
 
             let projectErrors: Diagnostic[];
             let rootFilesChanged = false;
@@ -858,7 +858,7 @@ namespace ts.server {
                 let toAdd: ScriptInfo[];
                 let toRemove: ScriptInfo[];
                 for (const oldFile of oldRootScriptInfos) {
-                    if (!newRootScriptInfoMap.contains(oldFile.fileName)) {
+                    if (!newRootScriptInfoMap.has(oldFile.fileName)) {
                         (toRemove || (toRemove = [])).push(oldFile);
                     }
                 }
@@ -1019,7 +1019,7 @@ namespace ts.server {
                     this.logger.info(`Host information ${args.hostInfo}`);
                 }
                 if (args.formatOptions) {
-                    mergeMaps(this.hostConfiguration.formatCodeOptions, args.formatOptions);
+                    mergeMapLikes(this.hostConfiguration.formatCodeOptions, args.formatOptions);
                     this.logger.info("Format host information updated");
                 }
             }

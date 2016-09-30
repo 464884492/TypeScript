@@ -29,7 +29,6 @@ namespace ts.server {
         if ((arr1 || emptyArray).length === 0 && (arr2 || emptyArray).length === 0) {
             return true;
         }
-        //use a real Set
         const set = new StringMap<boolean>();
         let unique = 0;
 

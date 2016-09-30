@@ -444,12 +444,7 @@ namespace ts {
             if (!classifiableNames) {
                 // Initialize a checker so that all our files are bound.
                 getTypeChecker();
-                classifiableNames = new StringSet();
-
-                for (const sourceFile of files) {
-                    //copyMapPropertiesFromTo(sourceFile.classifiableNames, classifiableNames);
-                    copySetValuesFromTo(sourceFile.classifiableNames, classifiableNames);
-                }
+                classifiableNames = stringSetAggregate(files, sourceFile => sourceFile.classifiableNames);
             }
 
             return classifiableNames;

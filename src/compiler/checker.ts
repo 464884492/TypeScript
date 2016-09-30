@@ -1461,12 +1461,12 @@ namespace ts {
                     }
                 }
                 else if (lookupTable && exportNode && id !== "default" && targetSymbol && resolveSymbol(targetSymbol) !== resolveSymbol(sourceSymbol)) {
-                    const bar = lookupTable.get(id); //name
-                    if (!bar.exportsWithDuplicate) {
-                        bar.exportsWithDuplicate = [exportNode];
+                    const collisionTracker = lookupTable.get(id);
+                    if (!collisionTracker.exportsWithDuplicate) {
+                        collisionTracker.exportsWithDuplicate = [exportNode];
                     }
                     else {
-                        bar.exportsWithDuplicate.push(exportNode);
+                        collisionTracker.exportsWithDuplicate.push(exportNode);
                     }
                 }
             });
@@ -3870,10 +3870,7 @@ namespace ts {
                                 const memberSymbol = getSymbolOfNode(member);
                                 const value = getEnumMemberValue(member);
                                 if (!memberTypes.get(value)) {
-                                    //setAndReturn?
-                                    const memberType = createEnumLiteralType(memberSymbol, enumType, "" + value);
-                                    memberTypes.set(value, memberType);
-                                    memberTypeList.push(memberType);
+                                    memberTypeList.push(setAndReturn(memberTypes, value, createEnumLiteralType(memberSymbol, enumType, "" + value)));
                                 }
                             }
                         }
@@ -4024,23 +4021,13 @@ namespace ts {
         }
 
         function createSymbolTable(symbols: Symbol[]): SymbolTable {
-            //helper fn for this
-            const result = new StringMap<Symbol>();
-            for (const symbol of symbols) {
-                result.set(symbol.name, symbol);
-            }
-            return result;
+            return arrayToMap(symbols, symbol => symbol.name);
         }
 
         // The mappingThisOnly flag indicates that the only type parameter being mapped is "this". When the flag is true,
         // we check symbols to see if we can quickly conclude they are free of "this" references, thus needing no instantiation.
         function createInstantiatedSymbolTable(symbols: Symbol[], mapper: TypeMapper, mappingThisOnly: boolean): SymbolTable {
-            //helper fn for this
-            const result = new StringMap<Symbol>();
-            for (const symbol of symbols) {
-                result.set(symbol.name, mappingThisOnly && isIndependentMember(symbol) ? symbol : instantiateSymbol(symbol, mapper));
-            }
-            return result;
+            return arrayToMap(symbols, symbol => symbol.name, symbol => mappingThisOnly && isIndependentMember(symbol) ? symbol : instantiateSymbol(symbol, mapper));
         }
 
         function addInheritedMembers(symbols: SymbolTable, baseSymbols: Symbol[]) {
@@ -7027,8 +7014,11 @@ namespace ts {
                 return result;
             }
 
-            //document the new parameter
-            function eachPropertyRelatedTo(source: Type, target: Type, kind: IndexKind, reportErrors: boolean,  redoingInV8ObjectInsertionOrder?: boolean): Ternary {
+            /**
+             * For consistency we report the first error in V8 object insertion order.
+             * Since that's slow and there usually isn't an error, we only sort properties the second time around.
+             */
+            function eachPropertyRelatedTo(source: Type, target: Type, kind: IndexKind, reportErrors: boolean, redoingInV8ObjectInsertionOrder?: boolean): Ternary {
                 let result = Ternary.True;
                 let properties = getPropertiesOfObjectType(source);
                 if (redoingInV8ObjectInsertionOrder) {
@@ -7485,7 +7475,6 @@ namespace ts {
         }
 
         function transformTypeOfMembers(type: Type, f: (propertyType: Type) => Type) {
-            //helper fn
             const members = new StringMap<Symbol>();
             for (const property of getPropertiesOfObjectType(type)) {
                 const original = getTypeOfSymbol(property);
@@ -17049,9 +17038,7 @@ namespace ts {
                 return true;
             }
 
-            //helper fn for creating map here
-            const seen = new StringMap<{ prop: Symbol; containingType: Type }>();
-            forEach(resolveDeclaredMembers(type).declaredProperties, p => { seen.set(p.name, { prop: p, containingType: type }); });
+            const seen: StringMap<{ prop: Symbol; containingType: Type }> = arrayToMap(resolveDeclaredMembers(type).declaredProperties, p => p.name, p => ({ prop: p, containingType: type }));
             let ok = true;
 
             for (const base of baseTypes) {
@@ -17059,7 +17046,7 @@ namespace ts {
                 for (const prop of properties) {
                     const existing = seen.get(prop.name);
                     if (!existing) {
-                        seen.set(prop.name, { prop: prop, containingType: base });
+                        seen.set(prop.name, { prop, containingType: base });
                     }
                     else {
                         const isInheritedProperty = existing.containingType !== type;
@@ -19225,9 +19212,7 @@ namespace ts {
                     // Merge in UMD exports with first-in-wins semantics (see #9771)
                     const source = file.symbol.globalExports;
                     source.forEach((sourceSymbol, id) => {
-                        if (!globals.has(id)) { //updateIfnotPresent pattern?
-                            globals.set(id, sourceSymbol);
-                        }
+                        _setIfNotSet(globals, id, () => sourceSymbol);
                     });
                 }
                 if ((compilerOptions.isolatedModules || isExternalModule(file)) && !file.isDeclarationFile) {

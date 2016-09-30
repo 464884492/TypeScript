@@ -134,11 +134,11 @@ namespace ts {
                         sourceFiles.push({
                             name: key,
                             refCount: entry.languageServiceRefCount,
-                            references: entry.owners//.slice(0) //copy not needed, we just stringify it anyway!
+                            references: entry.owners
                         });
                     });
                     sourceFiles.sort((x, y) => y.refCount - x.refCount);
-                    bucketInfoArray.push({ bucket: name, sourceFiles })
+                    bucketInfoArray.push({ bucket: name, sourceFiles });
                 }
             });
 

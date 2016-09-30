@@ -1,4 +1,63 @@
 namespace ts {
+    /**
+     * Type of objects whose values are all of the same type.
+     * Unlike with OldMap, the `in` and `for-in` operators can not be safely used.
+    */
+    export interface MapLike<T> {
+        [index: string]: T;
+    }
+
+    /**
+     * Type of objects with a null prototype, meant to be used only as dictionaries.
+     * Prefer to use StringMap.
+     */
+    //rename
+    export interface OldMap<T> {
+        __oldMapBrand: any;
+        [key: string]: T;
+    }
+
+    /**
+     * This contains just the parts of ES6's `Map` interface that we can safely use.
+     * Map can't be directly instantiated; only StringMap and NumberMap can, as those are shimmable.
+     *
+     * Internet Explorer does not support iterator-returning methods, so those are not allowed here.
+     * But map-using functions in dataStructures.ts check for these features and use them where possible.
+     */
+    export interface Map<K, V> {
+        clear(): void;
+        delete(key: K): void;
+        get(key: K): V;
+        /**
+         * Whether the key is in the map.
+         * Note: It is better to ask forgiveness than permission. Consider calling `get` and checking if the result is undefined.
+         */
+        has(key: K): boolean;
+        set(key: K, value: V): void;
+
+        forEach(action: (value: V, key: K) => void): void;
+    }
+
+    /** In runtimes without Maps, this is implemented using an object in dictionary mode. */
+    export type StringMap<T> = Map<string, T>;
+
+    /**
+     * In runtimes without Maps, this is implemented using a sparse array.
+     * This is generic over the key type because it is usually an enum.
+     */
+    export type NumberMap<K extends number, V> = Map<K, V>
+
+    /** Represents a set of strings.
+     * Usually this is the builtin Set class.
+     * In runtimes without Sets, this is implemented using a StringMap with dummy values.
+     */
+    export interface StringSet {
+        add(value: string): void;
+        has(value: string): boolean;
+        delete(value: string): void;
+        forEach(action: (value: string) => void): void;
+    }
+
     // branded string type used to store absolute, normalized and canonicalized paths
     // arbitrary file name can be converted to Path via toPath function
     export type Path = string & { __pathBrand: any };
@@ -2293,7 +2352,6 @@ namespace ts {
     /* @internal */
     export interface TransientSymbol extends Symbol, SymbolLinks { }
 
-    //Uh-uh. Hope no one is looking at this...
     export type SymbolTable = StringMap<Symbol>;
 
     /** Represents a "prefix*suffix" pattern. */
@@ -2447,11 +2505,6 @@ namespace ts {
     // Enum types (TypeFlags.Enum)
     export interface EnumType extends Type {
         memberTypes: NumberMap<number, EnumLiteralType>;
-    }
-
-    //move to its old place
-    export interface MapLike<T> {
-        [index: string]: T;
     }
 
     // Enum types (TypeFlags.EnumLiteral)
@@ -2780,7 +2833,7 @@ namespace ts {
         fileNames: string[];                            // The file names that belong to the same project.
         projectRootPath: string;                        // The path to the project root directory
         safeListPath: string;                           // The path used to retrieve the safe list
-        packageNameToTypingLocation: StringMap<string>;       // The map of package names to their cached typing locations
+        packageNameToTypingLocation: MapLike<string>;   // The map of package names to their cached typing locations
         typingOptions: TypingOptions;                   // Used to customize the typing inference process
         compilerOptions: CompilerOptions;               // Used as a source for typing inference
     }

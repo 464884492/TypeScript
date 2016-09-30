@@ -516,9 +516,9 @@ namespace ts {
     /* @internal */
     export function parseCustomTypeOption(opt: CommandLineOptionOfCustomType, value: string, errors: Diagnostic[]) {
         const key = trimString((value || "")).toLowerCase();
-        const map = opt.type;
-        if (map.has(key)) { //single get
-            return map.get(key);
+        const customType = opt.type.get(key);
+        if (customType !== undefined) {
+            return customType;
         }
         else {
             errors.push(createCompilerDiagnosticForInvalidCustomType(opt));
@@ -694,8 +694,6 @@ namespace ts {
      * @param fileNames array of filenames to be generated into tsconfig.json
      */
     /* @internal */
-    //I changed this to return MapLike instead of Map...
-    //return type is still wrong since it has 'files'...
     export function generateTSConfig(options: CompilerOptions, fileNames: string[]): { compilerOptions: MapLike<CompilerOptionsValue> } {
         const compilerOptions = extend(options, defaultInitCompilerOptions);
         const configurations: any = {
@@ -721,7 +719,6 @@ namespace ts {
             }
         }
 
-        //Changed this from MapLike to Map, because it's only used with Maps
         function getNameOfCompilerOptionValue(value: CompilerOptionsValue, customTypeMap: StringMap<string | number>): string | undefined {
             // There is a typeMap associated with this command-line option so use it to map value back to its name
             return findInMap(customTypeMap, (customValue, key) => {

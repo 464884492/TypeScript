@@ -90,8 +90,7 @@ namespace ts.server {
         };
     }
 
-    //used?
-    export function mergeMaps(target: MapLike<any>, source: MapLike <any>): void {
+    export function mergeMapLikes(target: MapLike<any>, source: MapLike <any>): void {
         for (const key in source) {
             if (hasProperty(source, key)) {
                 target[key] = source[key];
@@ -132,32 +131,6 @@ namespace ts.server {
         return <NormalizedPath>fileName;
     }
 
-    export interface NormalizedPathMap<T> {
-        get(path: NormalizedPath): T;
-        set(path: NormalizedPath, value: T): void;
-        contains(path: NormalizedPath): boolean;
-        remove(path: NormalizedPath): void;
-    }
-
-    //KILILLILIILLIIL!!!!!!!
-    //but it's publicly exported...
-    export function createNormalizedPathMap<T>(): NormalizedPathMap<T> {
-        const map = new StringMap<T>();
-        return {
-            get(path) {
-                return map.get(path);
-            },
-            set(path, value) {
-                map.set(path, value);
-            },
-            contains(path) {
-                return map.has(path);
-            },
-            remove(path) {
-                map.delete(path);
-            }
-        };
-    }
     function throwLanguageServiceIsDisabledError() {
         throw new Error("LanguageService is disabled");
     }

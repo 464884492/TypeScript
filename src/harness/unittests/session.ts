@@ -111,10 +111,7 @@ namespace ts.server {
         describe("onMessage", () => {
             it("should not throw when commands are executed with invalid arguments", () => {
                 let i = 0;
-                for (const name in CommandNames) {
-                    if (!Object.prototype.hasOwnProperty.call(CommandNames, name)) { //TODO: use hasProperty
-                        continue;
-                    }
+                eachOwnProperty(CommandNames, name => {
                     const req: protocol.Request = {
                         command: name,
                         seq: i,
@@ -144,7 +141,7 @@ namespace ts.server {
                     i++;
                     req.arguments = [];
                     session.onMessage(JSON.stringify(req));
-                }
+                });
                 session.onMessage("GARBAGE NON_JSON DATA");
             });
             it("should output the response for a correctly handled message", () => {

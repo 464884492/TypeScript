@@ -965,8 +965,8 @@ namespace FourSlash {
         }
 
         public verifyQuickInfos(namesAndTexts: { [name: string]: string | [string, string] }) {
-            //TODO: don't bother creating a map
-            ts.mapOfMapLike(namesAndTexts).forEach((text, name) => {
+            for (const name in namesAndTexts) {
+                const text = namesAndTexts[name];
                 if (text instanceof Array) {
                     assert(text.length === 2);
                     const [expectedText, expectedDocumentation] = text;
@@ -975,7 +975,7 @@ namespace FourSlash {
                 else {
                     this.verifyQuickInfoAt(name, text);
                 }
-            });
+            }
         }
 
         public verifyQuickInfoString(expectedText: string, expectedDocumentation?: string) {

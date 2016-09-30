@@ -356,8 +356,7 @@ export = C;
         function test(files: StringMap<string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
             const getCanonicalFileName = createGetCanonicalFileName(useCaseSensitiveFileNames);
             if (!useCaseSensitiveFileNames) {
-                //don't use reduce then! silly billy
-                files = reduceProperties(files, (files, file, fileName) => (files.set(getCanonicalFileName(fileName), file), files), new StringMap<string>());
+                files = modifyKeys(files, getCanonicalFileName);
             }
 
             const host: CompilerHost = {
