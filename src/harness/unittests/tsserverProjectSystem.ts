@@ -241,7 +241,7 @@ namespace ts.projectSystem {
     export function checkMapKeys(caption: string, map: Map<string, any>, expectedKeys: string[]) {
         assert.equal(mapSize(map), expectedKeys.length, `${caption}: incorrect size of map`);
         for (const name of expectedKeys) {
-            assert.isTrue(map.has(name), `${caption} is expected to contain ${name}, actual keys: ${_ownKeys(map)}`);
+            assert.isTrue(map.has(name), `${caption} is expected to contain ${name}, actual keys: ${keysOfMap(map)}`);
         }
     }
 

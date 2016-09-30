@@ -58,7 +58,7 @@ namespace ts.Completions {
 
         return { isMemberCompletion, isNewIdentifierLocation: isNewIdentifierLocation, entries };
 
-        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: StringSet): CompletionEntry[] {
+        function getJavaScriptCompletionEntries(sourceFile: SourceFile, position: number, uniqueNames: Set<string>): CompletionEntry[] {
             const entries: CompletionEntry[] = [];
 
             getNameTable(sourceFile).forEach((nameTablePosition, name) => {
@@ -111,7 +111,7 @@ namespace ts.Completions {
 
         }
 
-        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): StringSet {
+        function getCompletionEntriesFromSymbols(symbols: Symbol[], entries: CompletionEntry[], location: Node, performCharacterChecks: boolean): Set<string> {
             const start = timestamp();
             const uniqueNames = new StringSet();
             if (symbols) {

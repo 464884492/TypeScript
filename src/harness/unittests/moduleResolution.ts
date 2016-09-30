@@ -356,7 +356,7 @@ export = C;
         function test(files: Map<string, string>, options: CompilerOptions, currentDirectory: string, useCaseSensitiveFileNames: boolean, rootFiles: string[], diagnosticCodes: number[]): void {
             const getCanonicalFileName = createGetCanonicalFileName(useCaseSensitiveFileNames);
             if (!useCaseSensitiveFileNames) {
-                files = modifyKeys(files, getCanonicalFileName);
+                files = transformKeys(files, getCanonicalFileName);
             }
 
             const host: CompilerHost = {

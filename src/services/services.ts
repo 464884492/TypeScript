@@ -507,7 +507,7 @@ namespace ts {
             }
 
             function getDeclarations(name: string) {
-                return _getOrUpdate(result, name, () => []);
+                return getOrUpdate(result, name, () => []);
             }
 
             function getDeclarationName(declaration: Declaration) {

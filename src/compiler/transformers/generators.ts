@@ -240,7 +240,7 @@ namespace ts {
         context.onSubstituteNode = onSubstituteNode;
 
         let currentSourceFile: SourceFile;
-        let renamedCatchVariables: StringSet;
+        let renamedCatchVariables: Set<string>;
         let renamedCatchVariableDeclarations: Map<number, Identifier>;
 
         let inGeneratorFunctionBody: boolean;

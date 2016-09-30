@@ -129,7 +129,7 @@ namespace ts.server {
                     this.directoryWatchersRefCount.set(currentPath, 1);
                 }
                 else {
-                    _mod(this.directoryWatchersRefCount, currentPath, count => count + 1);
+                    modifyValue(this.directoryWatchersRefCount, currentPath, count => count + 1);
                 }
                 project.directoriesWatchedForTsconfig.push(currentPath);
                 currentPath = parentPath;

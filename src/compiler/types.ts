@@ -18,6 +18,7 @@ namespace ts {
     export interface Map<K, V> {
         clear(): void;
         delete(key: K): void;
+        forEach(action: (value: V, key: K) => void): void;
         get(key: K): V;
         /**
          * Whether the key is in the map.
@@ -25,20 +26,17 @@ namespace ts {
          */
         has(key: K): boolean;
         set(key: K, value: V): void;
-
-        forEach(action: (value: V, key: K) => void): void;
     }
 
-    /** Represents a set of strings.
-     * Usually this is the builtin Set class.
-     * In runtimes without Sets, this is implemented using a StringMap with dummy values.
+    /**
+     * This contains just the parts of ES6's `Set` interface that we allow.
      */
-    //TODO: just use Set<T>
-    export interface StringSet {
-        add(value: string): void;
-        has(value: string): boolean;
-        delete(value: string): void;
-        forEach(action: (value: string) => void): void;
+    export interface Set<T> {
+        add(value: T): void;
+        clear(): void;
+        delete(value: T): void;
+        forEach(action: (value: T) => void): void;
+        has(value: T): boolean;
     }
 
     // branded string type used to store absolute, normalized and canonicalized paths
@@ -1825,7 +1823,7 @@ namespace ts {
         // Stores a line map for the file.
         // This field should never be used directly to obtain line map, use getLineMap function instead.
         /* @internal */ lineMap: number[];
-        /* @internal */ classifiableNames?: StringSet;
+        /* @internal */ classifiableNames?: Set<string>;
         // Stores a mapping 'external module reference text' -> 'resolved file name' | undefined
         // It is used to resolve module names in the checker.
         // Content of this field should never be used directly - use getResolvedModuleFileName/setResolvedModuleFileName functions instead
@@ -1914,7 +1912,7 @@ namespace ts {
         /* @internal */ getDiagnosticsProducingTypeChecker(): TypeChecker;
         /* @internal */ dropDiagnosticsProducingTypeChecker(): void;
 
-        /* @internal */ getClassifiableNames(): StringSet;
+        /* @internal */ getClassifiableNames(): Set<string>;
 
         /* @internal */ getNodeCount(): number;
         /* @internal */ getIdentifierCount(): number;

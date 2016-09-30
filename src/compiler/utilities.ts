@@ -2285,7 +2285,7 @@ namespace ts {
             diagnosticsModified = false;
             nonFileDiagnostics = sortAndDeduplicateDiagnostics(nonFileDiagnostics);
 
-            _mapValuesMutate(fileDiagnostics, sortAndDeduplicateDiagnostics);
+            updateMapValues(fileDiagnostics, sortAndDeduplicateDiagnostics);
         }
     }
 

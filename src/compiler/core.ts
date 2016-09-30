@@ -36,7 +36,7 @@ namespace ts {
         }
 
         function getKeys(): Path[] {
-            return _ownKeys(files) as Path[];
+            return keysOfMap(files) as Path[];
         }
 
         // path should already be well-formed so it does not need to be normalized

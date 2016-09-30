@@ -10447,7 +10447,7 @@ namespace ts {
             }
         }
 
-        function checkJsxAttribute(node: JsxAttribute, elementAttributesType: Type, nameTable: StringSet) {
+        function checkJsxAttribute(node: JsxAttribute, elementAttributesType: Type, nameTable: Set<string>) {
             let correspondingPropType: Type = undefined;
 
             // Look up the corresponding property for this attribute
@@ -10490,7 +10490,7 @@ namespace ts {
             return exprType;
         }
 
-        function checkJsxSpreadAttribute(node: JsxSpreadAttribute, elementAttributesType: Type, nameTable: StringSet) {
+        function checkJsxSpreadAttribute(node: JsxSpreadAttribute, elementAttributesType: Type, nameTable: Set<string>) {
             const type = checkExpression(node.expression);
             const props = getPropertiesOfType(type);
             for (const prop of props) {
@@ -19212,7 +19212,9 @@ namespace ts {
                     // Merge in UMD exports with first-in-wins semantics (see #9771)
                     const source = file.symbol.globalExports;
                     source.forEach((sourceSymbol, id) => {
-                        _setIfNotSet(globals, id, () => sourceSymbol);
+                        if (!globals.has(id)) {
+                            globals.set(id, sourceSymbol);
+                        }
                     });
                 }
                 if ((compilerOptions.isolatedModules || isExternalModule(file)) && !file.isDeclarationFile) {

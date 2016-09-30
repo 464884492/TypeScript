@@ -295,7 +295,7 @@ namespace ts {
         let commonSourceDirectory: string;
         let diagnosticsProducingTypeChecker: TypeChecker;
         let noDiagnosticsTypeChecker: TypeChecker;
-        let classifiableNames: StringSet;
+        let classifiableNames: Set<string>;
 
         let resolvedTypeReferenceDirectives = new StringMap<ResolvedTypeReferenceDirective>();
         let fileProcessingDiagnostics = createDiagnosticCollection();
@@ -440,11 +440,11 @@ namespace ts {
             return commonSourceDirectory;
         }
 
-        function getClassifiableNames(): StringSet {
+        function getClassifiableNames(): Set<string> {
             if (!classifiableNames) {
                 // Initialize a checker so that all our files are bound.
                 getTypeChecker();
-                classifiableNames = stringSetAggregate(files, sourceFile => sourceFile.classifiableNames);
+                classifiableNames = setAggregate(files, sourceFile => sourceFile.classifiableNames);
             }
 
             return classifiableNames;

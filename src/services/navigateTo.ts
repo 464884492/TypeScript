@@ -17,7 +17,8 @@ namespace ts.NavigateTo {
                 continue;
             }
 
-            _eachAndBreakIfReturningTrue(sourceFile.getNamedDeclarations(), (declarations, name) => {
+            // Use `someInMap` to break out early.
+            someInMap(sourceFile.getNamedDeclarations(), (declarations, name) => {
                 if (declarations) {
                     // First do a quick check to see if the name of the declaration matches the
                     // last portion of the (possibly) dotted name they're searching for.
